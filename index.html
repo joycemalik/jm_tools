@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindForge — AI Mind Map Generator</title>
+    <meta name="description" content="Upload any PDF or Word document and instantly generate a beautiful, interactive AI-powered mind map. Understand complex material faster." />
+    <!-- Sketch emoji favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <!-- PDF.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Mammoth.js for DOCX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- ═══════════════════ ONBOARDING OVERLAY ═══════════════════ -->
+      <div id="onboarding-overlay" class="overlay active">
+
+        <!-- Step 1: API Key Setup -->
+        <div id="step-apikey" class="onboard-step active">
+          <div class="onboard-card glass">
+            <div class="logo-mark">🧠</div>
+            <h1>MindForge</h1>
+            <p class="tagline">Transform any document into an interactive mind map</p>
+            <div class="setup-section">
+              <label for="api-key-input" class="field-label">OpenRouter API Key</label>
+              <div class="key-input-row">
+                <input id="api-key-input" type="password" placeholder="sk-or-..." autocomplete="off" spellcheck="false" />
+                <button id="show-key-btn" class="icon-btn" title="Toggle visibility">👁</button>
+              </div>
+              <p class="hint">Get a free key at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a> · Stored only in your browser</p>
+            </div>
+            <div class="setup-section">
+              <label class="field-label">AI Model</label>
+              <select id="model-select" class="select-field">
+                <optgroup label="⭐ Recommended">
+                  <option value="nvidia/nemotron-3-ultra-550b-a55b:free" selected>NVIDIA Nemotron 3 Ultra 550B (Free)</option>
+                </optgroup>
+                <optgroup label="Free / Budget">
+                  <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Free)</option>
+                  <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+                  <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free)</option>
+                  <option value="microsoft/phi-3-mini-128k-instruct:free">Phi-3 Mini (Free)</option>
+                </optgroup>
+                <optgroup label="Premium (Paid)">
+                  <option value="mistralai/mistral-nemo">Mistral Nemo</option>
+                  <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+                  <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                </optgroup>
+              </select>
+            </div>
+            <button id="save-key-btn" class="btn-primary" disabled>Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Layout Demo Picker -->
+        <div id="step-layout" class="onboard-step">
+          <div class="onboard-card glass wide">
+            <h2>Choose your mind map style</h2>
+            <p class="tagline">Pick what helps you think better. You can always switch later.</p>
+            <div class="layout-demos">
+              <button class="layout-demo-btn" data-layout="radial" id="demo-radial">
+                <div class="demo-canvas" id="demo-canvas-radial"></div>
+                <div class="demo-info">
+                  <strong>Radial</strong>
+                  <span>Classic spider map — center out</span>
+                </div>
+              </button>
+              <button class="layout-demo-btn" data-layout="force" id="demo-force">
+                <div class="demo-canvas" id="demo-canvas-force"></div>
+                <div class="demo-info">
+                  <strong>Force Network</strong>
+                  <span>Dynamic — nodes pull each other</span>
+                </div>
+              </button>
+            </div>
+            <p class="hint center">Click one to select it, then proceed</p>
+            <button id="confirm-layout-btn" class="btn-primary" disabled>Start Mapping →</button>
+          </div>
+        </div>
+
+      </div>
+      <!-- END ONBOARDING -->
+
+      <!-- ═══════════════════ MAIN APP ═══════════════════ -->
+      <div id="main-app" class="hidden">
+
+        <!-- TOP NAV -->
+        <nav class="topnav glass">
+          <div class="nav-brand">🧠 <span>MindForge</span></div>
+          <div class="nav-controls">
+            <button id="nav-layout-toggle" class="nav-btn" title="Switch layout">⊙ Layout</button>
+            <button id="nav-export-svg" class="nav-btn" title="Export SVG">↓ SVG</button>
+            <button id="nav-export-png" class="nav-btn" title="Export PNG">↓ PNG</button>
+            <button id="nav-settings" class="nav-btn settings-btn" title="Settings">⚙</button>
+          </div>
+        </nav>
+
+        <!-- UPLOAD ZONE -->
+        <div id="upload-zone" class="upload-zone">
+          <div class="upload-inner glass">
+            <div class="upload-icon">📄</div>
+            <h2>Drop your document here</h2>
+            <p>PDF or Word (.docx) — up to 50MB</p>
+            <button id="upload-browse-btn" class="btn-secondary">Browse files</button>
+            <input id="file-input" type="file" accept=".pdf,.docx,.doc" hidden />
+          </div>
+        </div>
+
+        <!-- PROCESSING SCREEN -->
+        <div id="processing-screen" class="hidden processing-screen">
+          <canvas id="snake-canvas" class="snake-canvas"></canvas>
+          <div class="processing-card">
+            <span id="processing-icon" class="processing-icon">📖</span>
+            <!-- Hand-drawn wave — animates like a pen sketching -->
+            <svg class="wave-wrap" viewBox="0 0 220 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path class="wave-path"
+                d="M2,12 Q18,3 36,12 Q54,21 72,12 Q90,3 108,12 Q126,21 144,12 Q162,3 180,12 Q198,21 214,14"
+                stroke="#c17f3c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3 id="processing-title" class="processing-title">Opening your document…</h3>
+            <p id="processing-sub" class="processing-sub"></p>
+            <!-- kept for JS compat, hidden via CSS -->
+            <div class="processing-spinner"></div>
+            <div class="progress-bar-wrap"><div id="progress-bar" class="progress-bar"></div></div>
+          </div>
+        </div>
+
+        <!-- MAP CONTAINER -->
+        <div id="map-container" class="map-container hidden">
+
+          <!-- SIDEBAR: map selector -->
+          <aside id="map-sidebar" class="map-sidebar glass">
+            <div class="sidebar-title">Maps</div>
+            <div id="map-list" class="map-list"></div>
+            <div class="sidebar-footer">
+              <button id="btn-regenerate" class="nav-btn full-w">↺ Regenerate</button>
+              <button id="btn-new-doc" class="nav-btn full-w muted">+ New Document</button>
+            </div>
+          </aside>
+
+          <!-- SVG CANVAS -->
+          <div id="canvas-wrap" class="canvas-wrap">
+            <svg id="mindmap-svg"></svg>
+            <!-- Floating toolbar -->
+            <div class="canvas-toolbar glass">
+              <button id="btn-zoom-in" class="icon-btn" title="Zoom in">+</button>
+              <button id="btn-zoom-out" class="icon-btn" title="Zoom out">−</button>
+              <button id="btn-reset-zoom" class="icon-btn" title="Fit to screen">⤢</button>
+            </div>
+          </div>
+
+          <!-- NODE DETAIL PANEL -->
+          <div id="node-detail" class="node-detail glass hidden">
+            <button id="close-detail" class="icon-btn close-btn">✕</button>
+            <div id="detail-icon" class="detail-icon"></div>
+            <h3 id="detail-title"></h3>
+            <p id="detail-excerpt" class="detail-excerpt"></p>
+            <div id="detail-children" class="detail-children"></div>
+          </div>
+
+        </div>
+        <!-- END MAP CONTAINER -->
+
+        <!-- SETTINGS PANEL -->
+        <div id="settings-panel" class="settings-panel glass hidden">
+          <button id="close-settings" class="icon-btn close-btn">✕</button>
+          <h3>Settings</h3>
+          <label class="field-label">OpenRouter API Key</label>
+          <div class="key-input-row">
+            <input id="settings-api-key" type="password" class="input-field" autocomplete="off" />
+            <button id="settings-show-key" class="icon-btn">👁</button>
+          </div>
+          <label class="field-label" style="margin-top:1rem">Model</label>
+          <select id="settings-model-select" class="select-field">
+            <optgroup label="⭐ Recommended">
+              <option value="nvidia/nemotron-3-ultra-550b-a55b:free">NVIDIA Nemotron 3 Ultra 550B (Free)</option>
+            </optgroup>
+            <optgroup label="Free / Budget">
+              <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Free)</option>
+              <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+              <option value="google/gemma-2-9b-it:free">Gemma 2 9B (Free)</option>
+              <option value="microsoft/phi-3-mini-128k-instruct:free">Phi-3 Mini (Free)</option>
+            </optgroup>
+            <optgroup label="Premium (Paid)">
+              <option value="mistralai/mistral-nemo">Mistral Nemo</option>
+              <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+              <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+              <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+            </optgroup>
+          </select>
+          <button id="settings-save-btn" class="btn-primary" style="margin-top:1.5rem">Save Settings</button>
+        </div>
+
+      </div>
+      <!-- END MAIN APP -->
+
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
