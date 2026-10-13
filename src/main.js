@@ -33,6 +33,8 @@ const state = {
 const $ = id => document.getElementById(id);
 
 // Onboarding
+const landingPage      = $('landing-page');
+const openToolBtn      = $('open-tool-btn');
 const onboardOverlay   = $('onboarding-overlay');
 const stepApiKey       = $('step-apikey');
 const stepLayout       = $('step-layout');
@@ -67,15 +69,11 @@ const settingsPanel    = $('settings-panel');
 ══════════════════════════════════════════ */
 function init() {
   loadFromStorage();
+  bindLanding();
   bindOnboarding();
   bindMainApp();
   bindSettings();
-
-  if (state.apiKey) {
-    skipOnboarding();
-  } else {
-    showOnboarding();
-  }
+  showLanding();
 }
 
 function loadFromStorage() {
@@ -96,6 +94,29 @@ function saveToStorage() {
   localStorage.setItem('mf_api_key', state.apiKey);
   localStorage.setItem('mf_model',   state.model);
   localStorage.setItem('mf_layout',  state.layout);
+}
+
+/* ══════════════════════════════════════════
+   LANDING
+══════════════════════════════════════════ */
+function bindLanding() {
+  if (!openToolBtn) return;
+  openToolBtn.addEventListener('click', enterToolApp);
+}
+
+function showLanding() {
+  onboardOverlay.classList.remove('active');
+  mainApp.classList.add('hidden');
+  landingPage.classList.remove('hidden');
+}
+
+function enterToolApp() {
+  landingPage.classList.add('hidden');
+  if (state.apiKey) {
+    skipOnboarding();
+  } else {
+    showOnboarding();
+  }
 }
 
 /* ══════════════════════════════════════════

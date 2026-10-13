@@ -87,6 +87,65 @@ body::before {
 
 #app { position: relative; z-index: 1; height: 100vh; }
 
+/* ─── Landing ─── */
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.landing-card {
+  width: min(760px, 100%);
+  padding: 2.4rem 2rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.landing-kicker {
+  font-family: 'Caveat', cursive;
+  color: var(--accent);
+  font-size: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.landing-card h1 {
+  font-family: 'Caveat', cursive;
+  font-size: 2.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.landing-summary {
+  color: var(--ink-mid);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.3rem;
+}
+
+.tool-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.tool-entry h2 {
+  font-family: 'Caveat', cursive;
+  font-size: 1.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.tool-entry p {
+  color: var(--ink-mid);
+  font-size: 0.82rem;
+}
+
 /* ─── Sketch card (replaces glass) ─── */
 .glass {
   background: var(--surface2);
@@ -831,6 +890,8 @@ input:focus {
 
 /* ─── Responsive ─── */
 @media (max-width: 640px) {
+  .landing-card h1 { font-size: 2rem; }
+  .tool-entry { flex-direction: column; align-items: flex-start; }
   .map-container { grid-template-columns: 1fr; }
   .map-sidebar { display: none; }
   .onboard-card.wide { padding: 1.1rem; }
